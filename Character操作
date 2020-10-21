@@ -2,3 +2,114 @@
 由于把movement component分开写了，说是理解代码，其实也没理解多少。。。
 就直接写character的操作算了，反正也是一样的。
 包括角色模型，角色动作，角色操纵等等操作，可以创建一个最基本的可操纵游戏角色出来。
+
+
+  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;//弹簧臂
+先设置弹簧臂组件
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))//蓝图允许访问private属性
+	class UCameraComponent* FollowCamera;//跟随的相机
+相机组件，常规
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseTurnRate;//转向速率
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseLookUpRate;//纵轴的速率
+这两个是设置键盘上下左右的转向速率
+
+cpp中：
+  CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));//相机弹簧臂
+	CameraBoom->SetupAttachment(GetRootComponent());
+ 这里直接调用是因为Character角色继承于Pawn，角色的默认根组件应该是 一个角色碰撞体积的胶囊capsule
+  
+  
+	CameraBoom->TargetArmLength = 400.f;//弹簧臂长度
+	CameraBoom->bUsePawnControlRotation = true;//旋转基于控制器
+busepawncontrolrotation表示弹簧臂   根据contoller的旋转而旋转  这里控制器应该一般表示为鼠标晃动控制的镜头
+	//硬编码胶囊大小
+	GetCapsuleComponent()->SetCapsuleSize(60.f, 105.f);
+  方法没有初始化也可以调用也是因为继承于pawn，设置了胶囊的大小
+
+
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));//创建相机
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);//附着在弹簧臂上，sokectname是弹簧臂上的插槽
+	FollowCamera->bUsePawnControlRotation = false;//相机不随弹簧臂移动，只是附着弹簧臂
+ 相机不会随鼠标的晃动而相对于自己晃动，只是附着在弹簧臂上，跟随弹簧臂 
+ 
+	//转向速率
+	BaseTurnRate = 20.f;//键盘控制的转向速率
+	BaseLookUpRate = 20.f;
+
+再设置：
+  void MoveForward(float Value);
+	void MoveRight(float Value);
+
+	void TurnAtRate(float Rate);
+	void LookUpAtRate(float Rate);
+基础的角色移动时，调用的方法，下面的是键盘操作
+
+cpp中：
+构造函数中
+//控制器旋转的时候角色不旋转，只影响相机
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+先设置角色不会随控制器的转动而转动法向，比如fps的操作方式，而是一般rpg的视角
+
+void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+输入方法
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	check(PlayerInputComponent);
+  检测input是否为真，为假则终止执行
+
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);//ACharacter自带的jump方法
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+  jump和stopjumping都是character中自带的方法
+  这个调用方法应该只能背了。。。由于跳跃是一次性动作所以使用文件设置中的Action
+
+	PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
+  键盘操纵控制角色前进后退
+
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);//APawn方法鼠标输入
+	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+  文件设置中绑定Mouse X和Mouse Y，监控鼠标的输入，方法体继承于pawn，也不用自己写
+  
+	PlayerInputComponent->BindAxis("TurnRate", this, &AMainCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &AMainCharacter::LookUpAtRate);
+  键盘操作视角转动
+}
+
+void AMainCharacter::MoveRight(float Value) {
+	if ((Controller != nullptr) && (Value != 0.0f))
+	{
+		//寻找控制器指向的前方
+		const FRotator Rotation = Controller->GetControlRotation();//现在的方向
+		const FRotator YawRotation(0.f, Rotation.Yaw, 0.0f);准备增加的向量
+设置转向方向向量
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+    
+		AddMovementInput(Direction, Value);
+	} 
+}
+
+
+void AMainCharacter::TurnAtRate(float Rate) {
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+  单位时间内转向
+}
+void AMainCharacter::LookUpAtRate(float Rate) {
+	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+  
+在构造函数中要添加：
+//角色随着输入的方向移动
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+  角色面向控制器转向的方向
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.f, 0.0f);//转向速率
+	GetCharacterMovement()->JumpZVelocity = 500.f;//跳起速度
+	GetCharacterMovement()->AirControl = 0.2f;//空中细微移动
+  
+  
