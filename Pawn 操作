@@ -30,7 +30,57 @@
 	float MaxSpeed;
 cpp中
 	MaxSpeed = 100.f;
-	
+	 随便初始化一个数
+再设置
+	void MoveForward(float Value);
+	前后移动的方法函数
+	void MoveRight(float Value);
+	左右移动的方法
+	FVector CurrentVelocity;
+	设定在不同方向上的向量，fvector中是一个构造体，含有xyz三个方向的向量
+cpp中
+void ACritter::Tick(float DeltaTime)      tick函数，记录运行后每帧（或者几帧为间隔）的场景变化
+{
+	Super::Tick(DeltaTime);
+	我想把deltatime理解为项目运行后的时间轴，表示开始运行了
+	FVector NewLocation = GetActorLocation() + CurrentVelocity * DeltaTime;
+	向量也可以理解为一个位置，因为构造体本身就拥有xyz三个属性，新的位置为（先获取本身的位置）+在各方向上的移动距离，deltatime这段时间之内
+	可以理解为操作的时间
+	SetActorLocation(NewLocation);
+	设置新的位置
+}
+
+void ACritter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+input方法监控UE4内设置的操作方法，在project settings中设置，定义好名称和返回值
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+  
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &ACritter::MoveForward);
+绑定设置好的Moveforward操作，this表示对于这个对象，调用c++中的moveforward方法，这也是为什么要设置这个方法在头文件中
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ACritter::MoveRight);
+同上
+}
+
+void ACritter::MoveForward(float Value) {由头文件定义的方法而来，在cpp中编写方法体
+	CurrentVelocity.X = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed;
+  x方向的向量变化为在1到-1的范围内变化的数值*速度，正负表示方向，就可以不用编写四个方法来表示方向，这里速度很大不用管是因为之后还要*deltatime
+  对于视觉来说就有了连贯感
+  clamp方法表示对于输入的数值进行安全处理，设定上下界限
+}
+void ACritter::MoveRight(float Value) {
+	CurrentVelocity.Y = FMath::Clamp(Value, -1.f, 1.f) * MaxSpeed; 
+  同上
+}
+
+在UE4中对于gamemode设置蓝图，把默认的pawn对象设置为此对象，worldgamemode setting 中gamemode选择此设置好的游戏模式
+并且构造函数中添加一条语句
+AutoPossessPlayer = EAutoReceiveInput::Player0;//设置为player0
+
+
+至此创建了一个可以移动的Pawn物体，创建c++文件的蓝图之后可以导入世界
+
+
+
 	
 
 
