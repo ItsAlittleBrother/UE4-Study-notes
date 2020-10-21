@@ -1,0 +1,27 @@
+使用pawn模板创建c++文件
+要使用pawn模板创建可以移动的物体时
+.h头文件中使用
+    UPROPERTY(EditAnywhere)
+	class USkeletalMeshComponent* MeshComponent;
+    创建具有骨骼的网格组件，就可以导入有骨骼的资产，像这种component组件一般都为指针变量
+
+	UPROPERTY(EditAnywhere)
+	class UCameraComponent* Camera;
+    创建相机组件，跟随pawn
+此时在cpp文件中对定义的组件进行初始化
+
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    根组件，作为component组件的最底层，初始化
+	MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComponent"));
+    初始化网格组件，即各种角色资产导入的地方
+	MeshComponent->SetupAttachment(GetRootComponent());
+    附在根组件上，从属关系
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+    初始化相机组件
+	Camera->SetupAttachment(GetRootComponent());
+    附着根组件
+	Camera->SetRelativeLocation(FVector(-300.f, 0.f, 300.f));
+    设置相对的位置，相对于根组件的  距离位置
+	Camera->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
+    设置相机的绝对位置，相对于根组件旋转角度，对准根组件
+    
