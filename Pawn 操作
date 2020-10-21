@@ -10,7 +10,7 @@
     创建相机组件，跟随pawn
 此时在cpp文件中对定义的组件进行初始化
 
-    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     根组件，作为component组件的最底层，初始化
 	MeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComponent"));
     初始化网格组件，即各种角色资产导入的地方
@@ -25,3 +25,13 @@
 	Camera->SetRelativeRotation(FRotator(-45.f, 0.f, 0.f));
     设置相机的绝对位置，相对于根组件旋转角度，对准根组件
     
+再设置运动速度
+	UPROPERTY(EditAnywhere, Category = "Pawn Movement")//加入UE4的垃圾回收系统，同时规定在蓝图中的权限
+	float MaxSpeed;
+cpp中
+	MaxSpeed = 100.f;
+	
+	
+
+
+	
