@@ -1,0 +1,30 @@
+首先要明确达成的效果，即人物模型随着操作的不同，造成不同的速度，从而在世界中呈现出走路跑步跳跃或者静止不动的效果
+这就是蓝图动画，在c++中设置好参数之后，大多数由蓝图完成
+
+首先可以先右键-》Animation创建blendspace蓝图
+左栏资产详情中，可以设定时间轴的名称和最大数值，这里设置的是速度
+由于之前已经从商城中导入了动作                网站现在已知mixamo？
+从资产文件夹拖进去就行
+至此blendspace蓝图设置完毕
+
+另左栏骨骼树应该可以改变人物模型的动作什么的，还没有尝试
+
+由于是c++编程，所以真正的动作逻辑是在c++基础上创建蓝图
+首先创建Animinstance的c++文件
+
+设置：
+  virtual void NativeInitializeAnimation() override;
+
+	UFUNCTION(BlueprintCallable, Category = AnimationProperties)
+	void UpdateAnimationProperties();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float MovementSpeed; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	bool bIsInAir;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	class APawn* Pawn;
+
