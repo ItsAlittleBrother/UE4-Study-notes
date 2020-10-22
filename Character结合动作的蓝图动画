@@ -14,6 +14,7 @@
 
 设置：
   virtual void NativeInitializeAnimation() override;
+相当于character的beginplay函数
 
 	UFUNCTION(BlueprintCallable, Category = AnimationProperties)
 	void UpdateAnimationProperties();
@@ -27,4 +28,43 @@
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	class APawn* Pawn;
+
+cpp中：
+void UMainAnimInstance::NativeInitializeAnimation() {
+	if (Pawn == nullptr)
+	{
+		Pawn = TryGetPawnOwner();
+获取拥有动画的pawn
+	}
+
+}
+
+void UMainAnimInstance::UpdateAnimationProperties() {
+类似于tick的方法，更新在动画中不断变化的各个属性
+	if (Pawn == nullptr)
+	{
+		Pawn = TryGetPawnOwner();
+	}
+
+	if (Pawn)
+	{
+		FVector Speed = Pawn->GetVelocity();
+		FVector LateralSpeed = FVector(Speed.X, Speed.Y, 0.f);
+只是导入水平方向的速度，使用fvector的构造函数
+		MovementSpeed = LateralSpeed.Size();
+size方法获取具体数值，而不是向量
+
+		bIsInAir = Pawn->GetMovementComponent()->IsFalling();
+检测是否在空中
+	}
+}
+
+再进入引擎调整蓝图
+首先创建一个动画蓝图  右键啥啥啥的不多说的
+创建时选项就选animinstance和对应骨骼就可以了
+
+创建后，reparent blueprint选择c++文件作为父类
+
+感觉蓝图操作不好写，还是回蓝图多看看吧。。。。
+
 
